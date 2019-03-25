@@ -59,9 +59,9 @@ namespace TestingEnvironment.Orchestrator
         private string[] GetUrls() => 
             _config.RavenServers.Select(x => $"http://{x.Url.Replace("http://",string.Empty).Replace("https://",string.Empty)}:{x.Port}").ToArray();
 
-        public TestClientConfig RegisterTestClient(string clientName)
+        public TestClientConfig RegisterTestClient(string testName)
         {
-            //TODO: check if clientName is unique
+            //TODO: check if test name is unique
             //TODO: record client information in Raven embedded instance
             return new TestClientConfig
             {
@@ -70,7 +70,7 @@ namespace TestingEnvironment.Orchestrator
             };
         }
 
-        public EventResponse ReportEvent(string clientName, EventInfo @event)
+        public EventResponse ReportEvent(string testName, EventInfo @event)
         {
             //TODO: check test names - are they unique?
             //TODO: record client event in Raven embedded instance (logging, reporting etc)
