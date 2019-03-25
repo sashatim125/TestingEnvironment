@@ -2,3 +2,14 @@
 *.DotSettings.user
 TestingEnvironment/bin
 TestingEnvironment/obj
+/TestingEnvironment.Client/bin/Release/netcoreapp2.2
+/TestingEnvironment.Client/bin/Debug/netcoreapp2.2
+/TestingEnvironment.Client/obj
+/TestingEnvironment.Common/bin/Debug
+/TestingEnvironment.Common/bin/Release
+/TestingEnvironment.Common/obj
+/TestingEnvironment.Orchestrator/bin/Release
+/TestingEnvironment.Orchestrator/bin/Debug
+/TestingEnvironment.Orchestrator/obj
+/Tryouts/bin/Debug/netcoreapp2.2
+/Tryouts/obj
