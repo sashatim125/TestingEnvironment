@@ -1,4 +1,5 @@
-﻿using Nancy;
+﻿using System.Data.SqlTypes;
+using Nancy;
 using Nancy.ModelBinding;
 using TestingEnvironment.Common;
 
@@ -9,15 +10,22 @@ namespace TestingEnvironment.Orchestrator
     public class OrchestratorController : NancyModule
     {
         private readonly OrchestratorConfiguration _config;
+        private static readonly object Empty = new object();
 
         public OrchestratorController(OrchestratorConfiguration config)
         {
             _config = config;
             Put("/register", @params => 
-                Orchestrator.Instance.RegisterTestClient((string) @params.testName));
+                Orchestrator.Instance.RegisterTest((string) Request.Query.testName));
+
+            Put("/unregister", @params =>
+            {
+                Orchestrator.Instance.UnregisterTest((string) Request.Query.testName);
+                return Empty;
+            });
 
             Post("/report", 
-                @params => Orchestrator.Instance.ReportEvent(@params.testName, this.Bind<EventInfo>()));
+                @params => Orchestrator.Instance.ReportEvent(Request.Query.testName, this.Bind<EventInfo>()));
         }
     }
 }

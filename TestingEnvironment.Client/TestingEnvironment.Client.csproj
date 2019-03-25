@@ -7,7 +7,6 @@
   <ItemGroup>
     <PackageReference Include="RavenDB.Client" Version="4.2.0-rc-42001" />
     <PackageReference Include="ServiceStack" Version="5.4.0" />
-    <PackageReference Include="ServiceStack.Text" Version="5.4.0" />
   </ItemGroup>
 
   <ItemGroup>

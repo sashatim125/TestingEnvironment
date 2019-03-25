@@ -21,9 +21,11 @@ namespace Tryouts
         }
         static void Main(string[] args)
         {
-            var client = new TestClient("http://localhost:5000", "MegaTesT!");
-            client.Initialize();
-            client.RunTest();
+            using (var client = new TestClient("http://localhost:5000", "MegaTesT!"))
+            {
+                client.Initialize();
+                client.RunTest();
+            }
         }
     }
 }

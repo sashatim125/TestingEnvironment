@@ -59,7 +59,7 @@ namespace TestingEnvironment.Orchestrator
         private string[] GetUrls() => 
             _config.RavenServers.Select(x => $"http://{x.Url.Replace("http://",string.Empty).Replace("https://",string.Empty)}:{x.Port}").ToArray();
 
-        public TestClientConfig RegisterTestClient(string testName)
+        public TestClientConfig RegisterTest(string testName)
         {
             //TODO: check if test name is unique
             //TODO: record client information in Raven embedded instance
@@ -70,10 +70,33 @@ namespace TestingEnvironment.Orchestrator
             };
         }
 
+        public void UnregisterTest(string testName)
+        {
+            //mostly needed to detect if some client is stuck/hang out
+        }
+
         public EventResponse ReportEvent(string testName, EventInfo @event)
         {
             //TODO: check test names - are they unique?
             //TODO: record client event in Raven embedded instance (logging, reporting etc)
+
+            switch (@event.Type)
+            {
+                case EventInfo.EventType.Info:
+                    break;
+                case EventInfo.EventType.Warning:
+                    break;
+                case EventInfo.EventType.Error:
+                    break;
+                case EventInfo.EventType.TestSuccess:
+                    //record success?
+                    break;
+                case EventInfo.EventType.TestFailure:
+                    //record failure?
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
 
             return new EventResponse
             {

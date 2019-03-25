@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using Raven.Client.Documents;
 using ServiceStack;
 using TestingEnvironment.Common;
@@ -59,7 +60,9 @@ namespace TestingEnvironment.Client
             _orchestratorClient.Post<EventResponse>($"/report?testName={TestName}", eventInfo);
 
         public virtual void Dispose()
-        {     
+        {
+            _orchestratorClient.Put<object>($"/unregister?testName={TestName}",null);
+
             _orchestratorClient.Dispose();
             DocumentStore.Dispose();
         }
