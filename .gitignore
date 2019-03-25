@@ -1,2 +1,4 @@
 .vs
 *.DotSettings.user
+TestingEnvironment/bin
+TestingEnvironment/obj
