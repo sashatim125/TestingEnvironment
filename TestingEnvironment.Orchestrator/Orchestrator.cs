@@ -34,12 +34,18 @@ namespace TestingEnvironment.Orchestrator
         private readonly Dictionary<ClusterInfo, IDocumentStore> _clusterDocumentStores = new Dictionary<ClusterInfo, IDocumentStore>();
         private readonly WindsorContainer _container = new WindsorContainer();
 
-        private IDocumentStore _reportingDocumentStore;
+        private readonly IDocumentStore _reportingDocumentStore;
         
         private readonly ITestConfigSelectorStrategy[] _configSelectorStrategies;
         private ITestConfigSelectorStrategy _currentConfigSelectorStrategy;
 
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly OrchestratorConfiguration _config;
+
+        static Orchestrator()
+        {
+            var _ = _instance.Value;
+        }
 
         protected Orchestrator()
         {
@@ -85,7 +91,6 @@ namespace TestingEnvironment.Orchestrator
             //TODO: make this choice persistent? (via the embedded RavenDB instance)
             _currentConfigSelectorStrategy = _configSelectorStrategies[0];
 
-
             foreach (var clusterInfo in _config.Clusters ?? Enumerable.Empty<ClusterInfo>())
             {
                 clusterInfo.Urls = clusterInfo.Urls.Select(PrepareUrlForDocumentStore).ToArray();
@@ -107,6 +112,18 @@ namespace TestingEnvironment.Orchestrator
         private static string PrepareUrlForDocumentStore(string url)
         {
             return $"http://{url.Replace("http://", string.Empty).Replace("https://", string.Empty)}";
+        }
+
+        public bool TrySetConfigSelectorStrategy(string strategyName)
+        {
+            var strategy = _configSelectorStrategies.FirstOrDefault(x =>
+                x.Name.Equals(strategyName, StringComparison.InvariantCultureIgnoreCase));
+
+            if (strategy == null)
+                return false;
+
+            _currentConfigSelectorStrategy = strategy;
+            return true;
         }
 
         public ITestConfigSelectorStrategy[] ConfigSelectorStrategies => _configSelectorStrategies;
@@ -194,13 +211,13 @@ namespace TestingEnvironment.Orchestrator
                 }
 
                 var doc = new DatabaseRecord(databaseName);
-                documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
+                documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc, documentStore.Urls.Length));
 
             }
             else if (!databaseNames.Contains(databaseName))
             {
                 var doc = new DatabaseRecord(databaseName);
-                documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
+                documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc, documentStore.Urls.Length));
             }
         }        
 
