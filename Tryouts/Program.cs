@@ -5,7 +5,7 @@ namespace Tryouts
 {
     class Program
     {
-        public class TestClient : BaseClient
+        public class TestClient : BaseTestClient
         {
             public TestClient(string orchestratorUrl, string testName) : base(orchestratorUrl, testName)
             {

@@ -56,8 +56,11 @@ namespace TestingEnvironment.Orchestrator
             EnsureDatabaseExists(_config.DefaultDatabase, truncateExisting:true);
         }
 
+        //change this to control what server urls get sent to 
         private string[] GetUrls() => 
-            _config.RavenServers.Select(x => $"http://{x.Url.Replace("http://",string.Empty).Replace("https://",string.Empty)}:{x.Port}").ToArray();
+            _config.RavenServers.Select(x => $"http://{x.Url.Replace("http://",string.Empty).Replace("https://",string.Empty)}:{x.Port}")
+                                .Concat(_config.RemoteRavenServers.Select(x => $"http://{x.Replace("http://",string.Empty).Replace("https://",string.Empty)}"))
+                                .ToArray();
 
         public TestClientConfig RegisterTest(string testName)
         {

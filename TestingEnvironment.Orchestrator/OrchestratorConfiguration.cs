@@ -11,5 +11,6 @@
     {
         public string DefaultDatabase { get; set; }
         public ServerInfo[] RavenServers { get; set; }
+        public string[] RemoteRavenServers { get; set; }
     }
 }
