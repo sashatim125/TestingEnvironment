@@ -36,7 +36,11 @@ namespace TestingEnvironment.Orchestrator
                 Response.AsJson(Orchestrator.Instance.GetLastTestByName(Uri.UnescapeDataString((string) Request.Query.testName))));
 
             Get<dynamic>("/config-selectors",_ =>
-                Response.AsJson(Orchestrator.Instance.ConfigSelectorStrategies.Select(x => x.Name)));
+                Response.AsJson(Orchestrator.Instance.ConfigSelectorStrategies.Select(x => new
+                {
+                    x.Name,
+                    x.Description
+                })));
         }
     }
 }

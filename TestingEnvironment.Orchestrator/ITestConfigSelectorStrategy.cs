@@ -9,6 +9,7 @@ namespace TestingEnvironment.Orchestrator
         void Initialize(OrchestratorConfiguration configuration);
 
         string Name { get; } //must be unique!
+        string Description { get; }
 
         void OnBeforeRegisterTest(IDocumentStore store);
         void OnAfterUnregisterTest(TestInfo testInfo, IDocumentStore store);

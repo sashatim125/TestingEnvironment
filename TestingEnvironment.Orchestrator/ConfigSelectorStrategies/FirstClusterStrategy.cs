@@ -25,6 +25,7 @@ namespace TestingEnvironment.Orchestrator.ConfigSelectorStrategies
         }
 
         public string Name => "FirstClusterSelector";
+        public string Description => "Simply selects as configuration the first database and the first cluster from the settings file";
 
         public void OnBeforeRegisterTest(IDocumentStore store)
         {
