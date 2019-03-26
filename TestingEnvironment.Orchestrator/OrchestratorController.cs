@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Nancy;
 using Nancy.ModelBinding;
 using TestingEnvironment.Common;
@@ -32,7 +33,10 @@ namespace TestingEnvironment.Orchestrator
             
             //get latest test by name
             Get<dynamic>("/latest-tests", @params => 
-                FormatterExtensions.AsJson(Response, Orchestrator.Instance.GetLastTestByName(Uri.UnescapeDataString((string) Request.Query.testName))));
+                Response.AsJson(Orchestrator.Instance.GetLastTestByName(Uri.UnescapeDataString((string) Request.Query.testName))));
+
+            Get<dynamic>("/config-selectors",_ =>
+                Response.AsJson(Orchestrator.Instance.ConfigSelectorStrategies.Select(x => x.Name)));
         }
     }
 }

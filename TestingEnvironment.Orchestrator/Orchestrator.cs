@@ -5,7 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Castle.MicroKernel.Registration;
+using Castle.Windsor;
+using Castle.Windsor.Installer;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 using Raven.Client.Documents;
 using Raven.Client.Extensions;
 using Raven.Client.ServerWide;
@@ -27,9 +31,13 @@ namespace TestingEnvironment.Orchestrator
         public static Orchestrator Instance => _instance.Value;
 
         //we need this - perhaps we would need to monitor server statuses? create/delete additional databases?
-        private readonly IDocumentStore _testClusterDocumentStore;
+        private readonly Dictionary<ClusterInfo, IDocumentStore> _clusterDocumentStores = new Dictionary<ClusterInfo, IDocumentStore>();
+        private readonly WindsorContainer _container = new WindsorContainer();
 
         private IDocumentStore _reportingDocumentStore;
+        
+        private readonly ITestConfigSelectorStrategy[] _configSelectorStrategies;
+        private ITestConfigSelectorStrategy _currentConfigSelectorStrategy;
 
         private readonly OrchestratorConfiguration _config;
 
@@ -42,7 +50,12 @@ namespace TestingEnvironment.Orchestrator
             _config = new OrchestratorConfiguration();
             ConfigurationBinder.Bind(configProvider, _config);
 
-            foreach (var serverInfo in _config.RavenServers ?? Enumerable.Empty<ServerInfo>())
+            if (_config.Databases?.Length == 0)
+            {
+                throw new InvalidOperationException("Must be at least one database configured!");
+            }
+
+            foreach (var serverInfo in _config.LocalRavenServers ?? Enumerable.Empty<ServerInfo>())
             {
                 RaiseServer(serverInfo);
             }
@@ -52,32 +65,57 @@ namespace TestingEnvironment.Orchestrator
             _reportingDocumentStore.Initialize();
             new LatestTestByName().Execute(_reportingDocumentStore);
 
-            var configuredUrls = GetUrls();
-
-            _testClusterDocumentStore = new DocumentStore
+            if (_config.Clusters == null || _config.Clusters.Length == 0)
             {
-                Database = _config.DefaultDatabase,
-                Urls = configuredUrls
-            };
-            _testClusterDocumentStore.Initialize();
+                throw new InvalidOperationException("Must be at least one RavenDB cluster info configured!");
+            }
 
-            EnsureDatabaseExists(_config.DefaultDatabase, truncateExisting:true);
+            _container.Register(Classes.FromAssembly(typeof(Orchestrator).Assembly)
+                .BasedOn<ITestConfigSelectorStrategy>()
+                .WithServiceAllInterfaces()
+                .LifestyleSingleton());
+
+            _configSelectorStrategies = _container.ResolveAll<ITestConfigSelectorStrategy>();
+            if(_configSelectorStrategies.Length == 0)
+                throw new InvalidOperationException("Something really bad happened... there is no config selector strategies implemented!");
+
+            foreach(var strategy in _configSelectorStrategies)
+                strategy.Initialize(_config);
+
+            //TODO: make this choice persistent? (via the embedded RavenDB instance)
+            _currentConfigSelectorStrategy = _configSelectorStrategies[0];
+
+
+            foreach (var clusterInfo in _config.Clusters ?? Enumerable.Empty<ClusterInfo>())
+            {
+                var store = new DocumentStore
+                {
+                    Database = _config.Databases?[0],
+                    Urls = clusterInfo.Urls.Select(PrepareUrlForDocumentStore).ToArray(),
+                    //Certificate =  TODO: finish this
+                };
+                store.Initialize();
+                _clusterDocumentStores.Add(clusterInfo, store);
+
+                foreach(var database in _config.Databases ?? Enumerable.Empty<string>())
+                    EnsureDatabaseExists(database, store, truncateExisting:true);
+            }
         }
 
-        //change this to control what server urls get sent to 
-        private string[] GetUrls() => 
-            (_config.RavenServers ?? Enumerable.Empty<ServerInfo>()).Select(x => $"http://{x.Url.Replace("http://",string.Empty).Replace("https://",string.Empty)}:{x.Port}")
-                                .Concat((_config.RemoteRavenServers ?? Enumerable.Empty<string>()).Select(x => $"http://{x.Replace("http://",string.Empty).Replace("https://",string.Empty)}"))
-                                .ToArray();
+        private static string PrepareUrlForDocumentStore(string url)
+        {
+            return $"http://{url.Replace("http://", string.Empty).Replace("https://", string.Empty)}";
+        }
+
+        public ITestConfigSelectorStrategy[] ConfigSelectorStrategies => _configSelectorStrategies;
 
         public TestConfig RegisterTest(string testName, string testClassName, string author)
         {
             //decide which servers/database the test will get
-            var testConfig = new TestConfig
-            {
-                RavenUrls = GetUrls(),
-                Database = _config.DefaultDatabase
-            };
+            if(_currentConfigSelectorStrategy == null)
+                throw new InvalidOperationException("Something really bad happened... the config selector strategy appears to be null!");
+
+            var testConfig = _currentConfigSelectorStrategy.GetNextTestConfig();
 
             using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
             {
@@ -140,27 +178,27 @@ namespace TestingEnvironment.Orchestrator
             }
         }
         
-        private void EnsureDatabaseExists(string databaseName, bool truncateExisting = false)
+        private void EnsureDatabaseExists(string databaseName, IDocumentStore documentStore, bool truncateExisting = false)
         {
-            var databaseNames = _testClusterDocumentStore.Maintenance.Server.Send(new GetDatabaseNamesOperation(0, int.MaxValue));
+            var databaseNames = documentStore.Maintenance.Server.Send(new GetDatabaseNamesOperation(0, int.MaxValue));
             if (truncateExisting && databaseNames.Contains(databaseName))
             {
-                var result = _testClusterDocumentStore.Maintenance.Server.Send(new DeleteDatabasesOperation(databaseName, true));
+                var result = documentStore.Maintenance.Server.Send(new DeleteDatabasesOperation(databaseName, true));
                 if (result.PendingDeletes.Length > 0)
                 {
                     using (var ctx = JsonOperationContext.ShortTermSingleUse())
-                        _testClusterDocumentStore.GetRequestExecutor()
+                        documentStore.GetRequestExecutor()
                             .Execute(new WaitForRaftIndexCommand(result.RaftCommandIndex), ctx);
                 }
 
                 var doc = new DatabaseRecord(databaseName);
-                _testClusterDocumentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
+                documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
 
             }
             else if (!databaseNames.Contains(databaseName))
             {
                 var doc = new DatabaseRecord(databaseName);
-                _testClusterDocumentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
+                documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
             }
         }        
 

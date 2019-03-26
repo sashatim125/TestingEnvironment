@@ -30,7 +30,7 @@ namespace TestingEnvironment.Client
             var config = _orchestratorClient.Put<TestConfig>($"/register?testName={Uri.EscapeDataString(TestName)}&testClassName={Uri.EscapeDataString(GetType().FullName)}&author={Uri.EscapeDataString(_author)}",null);
             DocumentStore = new DocumentStore
             {
-                Urls = config.RavenUrls,
+                Urls = config.Urls,
                 Database = config.Database
             };
             DocumentStore.Initialize();
