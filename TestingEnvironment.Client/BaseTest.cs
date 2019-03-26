@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using Raven.Client.Documents;
 using ServiceStack;
 using TestingEnvironment.Common;
@@ -24,7 +23,7 @@ namespace TestingEnvironment.Client
 
         public virtual void Initialize()
         {            
-            var config = _orchestratorClient.Put<TestClientConfig>($"/register?testName={TestName}",null);
+            var config = _orchestratorClient.Put<TestConfig>($"/register?testName={TestName}",null);
             DocumentStore = new DocumentStore
             {
                 Urls = config.RavenUrls,

@@ -2,7 +2,7 @@
 
 namespace TestingEnvironment.Common
 {
-    public class TestClientConfig
+    public class TestConfig
     {
         public string[] RavenUrls { get; set; }
         public string Database { get; set; }

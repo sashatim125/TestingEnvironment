@@ -15,18 +15,24 @@ using Raven.Client.ServerWide.Commands;
 using Raven.Client.ServerWide.Operations;
 using Raven.Embedded;
 using Sparrow.Json;
+using Sparrow.Platform.Posix.macOS;
 using TestingEnvironment.Common;
+using TestingEnvironment.Common.Orchestrator;
 
 namespace TestingEnvironment.Orchestrator
 {
     public class Orchestrator
     {
+        private const string OrchestratorDatabaseName = "Orchestrator";
+
         // ReSharper disable once InconsistentNaming
         private static readonly Lazy<Orchestrator> _instance = new Lazy<Orchestrator>(() => new Orchestrator());
         public static Orchestrator Instance => _instance.Value;
 
         //we need this - perhaps we would need to monitor server statuses? create/delete additional databases?
-        private readonly DocumentStore _documentStore; 
+        private readonly IDocumentStore _testClusterDocumentStore;
+
+        private IDocumentStore _reportingDocumentStore;
 
         private readonly OrchestratorConfiguration _config;
 
@@ -45,13 +51,16 @@ namespace TestingEnvironment.Orchestrator
             }
             
             EmbeddedServer.Instance.StartServer();
+            _reportingDocumentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(OrchestratorDatabaseName));
+            _reportingDocumentStore.Initialize();
+            new LatestTestByName().Execute(_reportingDocumentStore);
 
-            _documentStore = new DocumentStore
+            _testClusterDocumentStore = new DocumentStore
             {
                 Database = _config.DefaultDatabase,
                 Urls = GetUrls()
             };
-            _documentStore.Initialize();
+            _testClusterDocumentStore.Initialize();
 
             EnsureDatabaseExists(_config.DefaultDatabase, truncateExisting:true);
         }
@@ -62,20 +71,53 @@ namespace TestingEnvironment.Orchestrator
                                 .Concat(_config.RemoteRavenServers.Select(x => $"http://{x.Replace("http://",string.Empty).Replace("https://",string.Empty)}"))
                                 .ToArray();
 
-        public TestClientConfig RegisterTest(string testName)
+        public TestConfig RegisterTest(string testName)
         {
-            //TODO: check if test name is unique
-            //TODO: record client information in Raven embedded instance
-            return new TestClientConfig
+            //decide which servers/database the test will get
+            var testConfig = new TestConfig
             {
                 RavenUrls = GetUrls(),
                 Database = _config.DefaultDatabase
             };
+
+            using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
+            {
+                var now = DateTime.UtcNow;
+                session.Store(new TestInfo
+                {
+                    Name = testName,
+                    ExtendedName = $"{testName} ({now})",
+                    Start = now,
+                    Events = new List<EventInfo>(),
+                    Config = testConfig //record what servers we are working with in this particular test
+                });
+                session.SaveChanges();
+            }
+
+            return testConfig;
         }
 
+        //mostly needed to detect if some client is stuck/hang out    
         public void UnregisterTest(string testName)
         {
-            //mostly needed to detect if some client is stuck/hang out
+            using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
+            {
+                var latestTestInfo = session.Query<TestInfo, LatestTestByName>().FirstOrDefault(x => x.Name == testName);
+                if (latestTestInfo != null)
+                {
+                    latestTestInfo.End = DateTime.UtcNow;
+                    session.Store(latestTestInfo);
+                    session.SaveChanges();
+                }
+            }
+        }
+
+        private TestInfo GetLastBy(string testName)
+        {
+            using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
+            {
+                return session.Query<TestInfo, LatestTestByName>().FirstOrDefault(x => x.Name == testName);
+            }
         }
 
         public EventResponse ReportEvent(string testName, EventInfo @event)
@@ -109,25 +151,25 @@ namespace TestingEnvironment.Orchestrator
         
         private void EnsureDatabaseExists(string databaseName, bool truncateExisting = false)
         {
-            var databaseNames = _documentStore.Maintenance.Server.Send(new GetDatabaseNamesOperation(0, int.MaxValue));
+            var databaseNames = _testClusterDocumentStore.Maintenance.Server.Send(new GetDatabaseNamesOperation(0, int.MaxValue));
             if (truncateExisting && databaseNames.Contains(databaseName))
             {
-                var result = _documentStore.Maintenance.Server.Send(new DeleteDatabasesOperation(databaseName, true));
+                var result = _testClusterDocumentStore.Maintenance.Server.Send(new DeleteDatabasesOperation(databaseName, true));
                 if (result.PendingDeletes.Length > 0)
                 {
                     using (var ctx = JsonOperationContext.ShortTermSingleUse())
-                        _documentStore.GetRequestExecutor()
+                        _testClusterDocumentStore.GetRequestExecutor()
                             .Execute(new WaitForRaftIndexCommand(result.RaftCommandIndex), ctx);
                 }
 
                 var doc = new DatabaseRecord(databaseName);
-                _documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
+                _testClusterDocumentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
 
             }
             else if (!databaseNames.Contains(databaseName))
             {
                 var doc = new DatabaseRecord(databaseName);
-                _documentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
+                _testClusterDocumentStore.Maintenance.Server.Send(new CreateDatabaseOperation(doc));
             }
         }        
 
@@ -146,7 +188,7 @@ namespace TestingEnvironment.Orchestrator
                 FileName = Path.Combine(server.Path, "Raven.Server.exe"),
                 WorkingDirectory = server.Path,
                 Arguments = args.ToString(),
-                 CreateNoWindow = true,
+                // CreateNoWindow = true,
                  RedirectStandardOutput = true,
                  RedirectStandardError = true,
                 RedirectStandardInput = true,
