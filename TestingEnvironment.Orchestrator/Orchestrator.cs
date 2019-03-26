@@ -112,7 +112,7 @@ namespace TestingEnvironment.Orchestrator
             }
         }
 
-        private TestInfo GetLastBy(string testName)
+        private TestInfo GetLastTestBy(string testName)
         {
             using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
             {
@@ -122,31 +122,21 @@ namespace TestingEnvironment.Orchestrator
 
         public EventResponse ReportEvent(string testName, EventInfo @event)
         {
-            //TODO: check test names - are they unique?
-            //TODO: record client event in Raven embedded instance (logging, reporting etc)
-
-            switch (@event.Type)
+            using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
             {
-                case EventInfo.EventType.Info:
-                    break;
-                case EventInfo.EventType.Warning:
-                    break;
-                case EventInfo.EventType.Error:
-                    break;
-                case EventInfo.EventType.TestSuccess:
-                    //record success?
-                    break;
-                case EventInfo.EventType.TestFailure:
-                    //record failure?
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                var latestTest = session.Query<TestInfo, LatestTestByName>().FirstOrDefault(x => x.Name == testName);
+                if (latestTest != null)
+                {
+                    latestTest.Events.Add(@event);
+                    session.SaveChanges();
+                }
+
+                //if returning EventResponse.ResponseType.Abort -> opportunity to request the test client to abort test...
+                return new EventResponse
+                {
+                    Type = EventResponse.ResponseType.Ok 
+                };
             }
-
-            return new EventResponse
-            {
-                Type = EventResponse.ResponseType.Ok //opportunity to request the test client to abort test...
-            };            
         }
         
         private void EnsureDatabaseExists(string databaseName, bool truncateExisting = false)
