@@ -66,7 +66,10 @@ namespace TestingEnvironment.Orchestrator
                 RaiseServer(serverInfo);
             }
             
-            EmbeddedServer.Instance.StartServer();
+            EmbeddedServer.Instance.StartServer(new ServerOptions
+{  
+    ServerUrl = "http://127.0.0.1:8090"
+});
             _reportingDocumentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(OrchestratorDatabaseName));
             _reportingDocumentStore.Initialize();
             new LatestTestByName().Execute(_reportingDocumentStore);
@@ -105,7 +108,7 @@ namespace TestingEnvironment.Orchestrator
                 _clusterDocumentStores.Add(clusterInfo, store);
 
                 foreach(var database in _config.Databases ?? Enumerable.Empty<string>())
-                    EnsureDatabaseExists(database, store, truncateExisting:true);
+                    EnsureDatabaseExists(database, store);
             }
         }
 
