@@ -10,20 +10,24 @@ namespace TestingEnvironment.Client
     {
         protected readonly string OrchestratorUrl;
         protected readonly string TestName;
+        
+        private readonly string _author;
+
         protected IDocumentStore DocumentStore;
 
         private readonly JsonServiceClient _orchestratorClient;
 
-        protected BaseTest(string orchestratorUrl, string testName)
+        protected BaseTest(string orchestratorUrl, string testName, string author)
         {
             OrchestratorUrl = orchestratorUrl ?? throw new ArgumentNullException(nameof(orchestratorUrl));
             TestName = testName ?? throw new ArgumentNullException(nameof(testName));
+            _author = author;
             _orchestratorClient = new JsonServiceClient(OrchestratorUrl);
         }
 
         public virtual void Initialize()
         {            
-            var config = _orchestratorClient.Put<TestConfig>($"/register?testName={TestName}&testClassName={GetType().FullName}",null);
+            var config = _orchestratorClient.Put<TestConfig>($"/register?testName={Uri.EscapeDataString(TestName)}&testClassName={Uri.EscapeDataString(GetType().FullName)}&author={Uri.EscapeDataString(_author)}",null);
             DocumentStore = new DocumentStore
             {
                 Urls = config.RavenUrls,
@@ -32,7 +36,29 @@ namespace TestingEnvironment.Client
             DocumentStore.Initialize();
         }
 
-        public abstract void RunTest();
+        public void RunTest()
+        {
+            try
+            {
+                RunActualTest();
+            }
+            catch (Exception e)
+            {
+                ReportFailure("Unhandled exception in test code.",e);
+            }
+        }
+
+        public abstract void RunActualTest();
+
+        protected void ReportInfo(string message, Dictionary<string, string> additionalInfo = null)
+        {
+            ReportEvent(new EventInfo
+            {
+                Message = message,
+                AdditionalInfo = additionalInfo,
+                Type = EventInfo.EventType.Info
+            });
+        }
 
         protected void ReportSuccess(string message, Dictionary<string, string> additionalInfo = null)
         {

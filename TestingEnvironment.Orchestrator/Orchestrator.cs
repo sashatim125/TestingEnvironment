@@ -42,7 +42,7 @@ namespace TestingEnvironment.Orchestrator
             _config = new OrchestratorConfiguration();
             ConfigurationBinder.Bind(configProvider, _config);
 
-            foreach (var serverInfo in _config.RavenServers)
+            foreach (var serverInfo in _config.RavenServers ?? Enumerable.Empty<ServerInfo>())
             {
                 RaiseServer(serverInfo);
             }
@@ -52,10 +52,12 @@ namespace TestingEnvironment.Orchestrator
             _reportingDocumentStore.Initialize();
             new LatestTestByName().Execute(_reportingDocumentStore);
 
+            var configuredUrls = GetUrls();
+
             _testClusterDocumentStore = new DocumentStore
             {
                 Database = _config.DefaultDatabase,
-                Urls = GetUrls()
+                Urls = configuredUrls
             };
             _testClusterDocumentStore.Initialize();
 
@@ -64,11 +66,11 @@ namespace TestingEnvironment.Orchestrator
 
         //change this to control what server urls get sent to 
         private string[] GetUrls() => 
-            _config.RavenServers.Select(x => $"http://{x.Url.Replace("http://",string.Empty).Replace("https://",string.Empty)}:{x.Port}")
-                                .Concat(_config.RemoteRavenServers.Select(x => $"http://{x.Replace("http://",string.Empty).Replace("https://",string.Empty)}"))
+            (_config.RavenServers ?? Enumerable.Empty<ServerInfo>()).Select(x => $"http://{x.Url.Replace("http://",string.Empty).Replace("https://",string.Empty)}:{x.Port}")
+                                .Concat((_config.RemoteRavenServers ?? Enumerable.Empty<string>()).Select(x => $"http://{x.Replace("http://",string.Empty).Replace("https://",string.Empty)}"))
                                 .ToArray();
 
-        public TestConfig RegisterTest(string testName, string testClassName)
+        public TestConfig RegisterTest(string testName, string testClassName, string author)
         {
             //decide which servers/database the test will get
             var testConfig = new TestConfig
@@ -85,6 +87,7 @@ namespace TestingEnvironment.Orchestrator
                     Name = testName,
                     ExtendedName = $"{testName} ({now})",
                     TestClassName = testClassName,
+                    Author = author,
                     Start = now,
                     Events = new List<EventInfo>(),
                     Config = testConfig //record what servers we are working with in this particular test
@@ -114,7 +117,7 @@ namespace TestingEnvironment.Orchestrator
         {
             using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
             {
-                return session.Query<TestInfo, LatestTestByName>().FirstOrDefault(x => x.Name == testName);
+                return session.Query<TestInfo>().OrderByDescending(x => x.Start).FirstOrDefault(x => x.Name == testName);;
             }
         }
 
@@ -122,7 +125,7 @@ namespace TestingEnvironment.Orchestrator
         {
             using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
             {
-                var latestTest = session.Query<TestInfo, LatestTestByName>().FirstOrDefault(x => x.Name == testName);
+                var latestTest = session.Query<TestInfo>().OrderByDescending(x => x.Start).FirstOrDefault(x => x.Name == testName);
                 if (latestTest != null)
                 {
                     latestTest.Events.Add(@event);

@@ -1,4 +1,5 @@
-﻿using Nancy;
+﻿using System;
+using Nancy;
 using Nancy.ModelBinding;
 using TestingEnvironment.Common;
 
@@ -13,21 +14,25 @@ namespace TestingEnvironment.Orchestrator
 
         public OrchestratorController(OrchestratorConfiguration config)
         {
+            
             _config = config;
             Put("/register", @params => 
-                Orchestrator.Instance.RegisterTest((string) Request.Query.testName, (string) Request.Query.testClassName));
+                Orchestrator.Instance.RegisterTest(
+                    Uri.UnescapeDataString((string) Request.Query.testName), 
+                    Uri.UnescapeDataString((string) Request.Query.testClassName),
+                    Uri.UnescapeDataString((string) Request.Query.author)));
 
             Put("/unregister", @params =>
             {
-                Orchestrator.Instance.UnregisterTest((string) Request.Query.testName);
+                Orchestrator.Instance.UnregisterTest(Uri.UnescapeDataString((string) Request.Query.testName));
                 return Empty;
             });
 
-            Post("/report", @params => Orchestrator.Instance.ReportEvent((string) Request.Query.testName, this.Bind<EventInfo>()));
+            Post("/report", @params => Orchestrator.Instance.ReportEvent(Uri.UnescapeDataString((string) Request.Query.testName), this.Bind<EventInfo>()));
             
             //get latest test by name
             Get<dynamic>("/latest-tests", @params => 
-                FormatterExtensions.AsJson(Response, Orchestrator.Instance.GetLastTestByName(Request.Query.testName)));
+                FormatterExtensions.AsJson(Response, Orchestrator.Instance.GetLastTestByName(Uri.UnescapeDataString((string) Request.Query.testName))));
         }
     }
 }
