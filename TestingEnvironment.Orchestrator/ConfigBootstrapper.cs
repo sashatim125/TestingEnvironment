@@ -1,4 +1,5 @@
 ﻿using Nancy;
+using Nancy.Configuration;
 using Nancy.TinyIoc;
 
 namespace TestingEnvironment.Orchestrator
@@ -14,6 +15,12 @@ namespace TestingEnvironment.Orchestrator
         public ConfigBootstrapper(OrchestratorConfiguration configuration)
         {
             _configuration = configuration;
+        }
+
+        public override void Configure(INancyEnvironment environment)
+        {
+            base.Configure(environment);
+            environment.Tracing(false, true); //enable showing error page for unhandled server exceptions
         }
 
         protected override void ConfigureApplicationContainer(TinyIoCContainer container)

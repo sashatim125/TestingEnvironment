@@ -23,7 +23,7 @@ namespace TestingEnvironment.Client
 
         public virtual void Initialize()
         {            
-            var config = _orchestratorClient.Put<TestConfig>($"/register?testName={TestName}",null);
+            var config = _orchestratorClient.Put<TestConfig>($"/register?testName={TestName}&testClassName={GetType().FullName}",null);
             DocumentStore = new DocumentStore
             {
                 Urls = config.RavenUrls,

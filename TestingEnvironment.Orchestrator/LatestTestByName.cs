@@ -15,6 +15,7 @@ namespace TestingEnvironment.Orchestrator
                     test.Name,
                     test.Config,
                     test.ExtendedName,
+                    test.TestClassName,
                     test.End,
                     test.Events
                 };
@@ -29,6 +30,7 @@ namespace TestingEnvironment.Orchestrator
                     lastResult.Name,
                     lastResult.Config,
                     lastResult.ExtendedName,
+                    lastResult.TestClassName,
                     lastResult.End,
                     lastResult.Events
                 };

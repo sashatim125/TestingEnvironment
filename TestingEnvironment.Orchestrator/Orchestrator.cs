@@ -71,7 +71,7 @@ namespace TestingEnvironment.Orchestrator
                                 .Concat(_config.RemoteRavenServers.Select(x => $"http://{x.Replace("http://",string.Empty).Replace("https://",string.Empty)}"))
                                 .ToArray();
 
-        public TestConfig RegisterTest(string testName)
+        public TestConfig RegisterTest(string testName, string testClassName)
         {
             //decide which servers/database the test will get
             var testConfig = new TestConfig
@@ -87,6 +87,7 @@ namespace TestingEnvironment.Orchestrator
                 {
                     Name = testName,
                     ExtendedName = $"{testName} ({now})",
+                    TestClassName = testClassName,
                     Start = now,
                     Events = new List<EventInfo>(),
                     Config = testConfig //record what servers we are working with in this particular test
@@ -112,7 +113,7 @@ namespace TestingEnvironment.Orchestrator
             }
         }
 
-        private TestInfo GetLastTestBy(string testName)
+        public TestInfo GetLastTestByName(string testName)
         {
             using (var session = _reportingDocumentStore.OpenSession(OrchestratorDatabaseName))
             {
@@ -179,8 +180,8 @@ namespace TestingEnvironment.Orchestrator
                 WorkingDirectory = server.Path,
                 Arguments = args.ToString(),
                 // CreateNoWindow = true,
-                 RedirectStandardOutput = true,
-                 RedirectStandardError = true,
+                // RedirectStandardOutput = true,
+                // RedirectStandardError = true,
                 RedirectStandardInput = true,
                 UseShellExecute = false,                
             };
@@ -188,26 +189,26 @@ namespace TestingEnvironment.Orchestrator
             var process = Process.Start(processStartInfo);
 
             string url = null;
-            var outputString = ReadOutput(process.StandardOutput, async (line, builder) =>
-            {
-                if (line == null)
-                {
-                    var errorString = ReadOutput(process.StandardError, null);
+            //var outputString = ReadOutput(process.StandardOutput, async (line, builder) =>
+            //{
+            //    if (line == null)
+            //    {
+            //        var errorString = ReadOutput(process.StandardError, null);
 
-                    ShutdownServerProcess(process);
+            //        ShutdownServerProcess(process);
 
-                    throw new InvalidOperationException($"Failed to RaiseServer {server.Url}");
-                }
+            //        throw new InvalidOperationException($"Failed to RaiseServer {server.Url}");
+            //    }
 
-                const string prefix = "Server available on: ";
-                if (line.StartsWith(prefix))
-                {
-                    url = line.Substring(prefix.Length);
-                    return true;
-                }
+            //    const string prefix = "Server available on: ";
+            //    if (line.StartsWith(prefix))
+            //    {
+            //        url = line.Substring(prefix.Length);
+            //        return true;
+            //    }
 
-                return false;
-            });
+            //    return false;
+            //});
         }
 
         private static string ReadOutput(StreamReader output, Func<string, StringBuilder, Task<bool>> onLine)

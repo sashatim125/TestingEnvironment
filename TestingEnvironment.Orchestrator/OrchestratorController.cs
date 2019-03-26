@@ -1,7 +1,9 @@
-﻿using System.Data.SqlTypes;
+﻿using System;
 using Nancy;
 using Nancy.ModelBinding;
+using Nancy.Routing;
 using TestingEnvironment.Common;
+using TestingEnvironment.Common.Orchestrator;
 
 // ReSharper disable VirtualMemberCallInConstructor
 
@@ -16,7 +18,7 @@ namespace TestingEnvironment.Orchestrator
         {
             _config = config;
             Put("/register", @params => 
-                Orchestrator.Instance.RegisterTest((string) Request.Query.testName));
+                Orchestrator.Instance.RegisterTest((string) Request.Query.testName, (string) Request.Query.testClassName));
 
             Put("/unregister", @params =>
             {
@@ -24,8 +26,11 @@ namespace TestingEnvironment.Orchestrator
                 return Empty;
             });
 
-            Post("/report", 
-                @params => Orchestrator.Instance.ReportEvent(Request.Query.testName, this.Bind<EventInfo>()));
+            Post("/report", @params => Orchestrator.Instance.ReportEvent((string) Request.Query.testName, this.Bind<EventInfo>()));
+            
+            //get latest test by name
+            Get<dynamic>("/latest-tests", @params => 
+                FormatterExtensions.AsJson(Response, Orchestrator.Instance.GetLastTestByName(Request.Query.testName)));
         }
     }
 }

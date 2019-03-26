@@ -7,6 +7,7 @@ namespace TestingEnvironment.Common.Orchestrator
     {
         public string Name { get; set; }
         public string ExtendedName { get; set; }
+        public string TestClassName { get; set; }
         public DateTime Start { get;set; }
         public DateTime End { get;set; }
         public List<EventInfo> Events { get;set; }
