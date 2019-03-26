@@ -5,9 +5,9 @@ namespace Tryouts
 {
     class Program
     {
-        public class TestClient : BaseTestClient
+        public class Test : BaseTest
         {
-            public TestClient(string orchestratorUrl, string testName) : base(orchestratorUrl, testName)
+            public Test(string orchestratorUrl, string testName) : base(orchestratorUrl, testName)
             {
             }
        
@@ -21,7 +21,7 @@ namespace Tryouts
         }
         static void Main(string[] args)
         {
-            using (var client = new TestClient("http://localhost:5000", "MegaTesT!"))
+            using (var client = new Test("http://localhost:5000", "MegaTesT!"))
             {
                 client.Initialize();
                 client.RunTest();

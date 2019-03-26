@@ -7,7 +7,7 @@ using TestingEnvironment.Common;
 
 namespace TestingEnvironment.Client
 {
-    public abstract class BaseTestClient : IDisposable
+    public abstract class BaseTest : IDisposable
     {
         protected readonly string OrchestratorUrl;
         protected readonly string TestName;
@@ -15,7 +15,7 @@ namespace TestingEnvironment.Client
 
         private readonly JsonServiceClient _orchestratorClient;
 
-        protected BaseTestClient(string orchestratorUrl, string testName)
+        protected BaseTest(string orchestratorUrl, string testName)
         {
             OrchestratorUrl = orchestratorUrl ?? throw new ArgumentNullException(nameof(orchestratorUrl));
             TestName = testName ?? throw new ArgumentNullException(nameof(testName));
