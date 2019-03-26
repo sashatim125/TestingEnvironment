@@ -20,7 +20,8 @@ namespace TestingEnvironment.Orchestrator.ConfigSelectorStrategies
             _nextConfigLazy = new Lazy<TestConfig>(() => new TestConfig
             {
                 Database = configuration.Databases[0],
-                Urls = configuration.Clusters[0].Urls
+                Urls = configuration.Clusters[0].Urls,
+                StrategyName = Name
             });
         }
 

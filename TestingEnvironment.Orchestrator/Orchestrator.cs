@@ -88,10 +88,12 @@ namespace TestingEnvironment.Orchestrator
 
             foreach (var clusterInfo in _config.Clusters ?? Enumerable.Empty<ClusterInfo>())
             {
+                clusterInfo.Urls = clusterInfo.Urls.Select(PrepareUrlForDocumentStore).ToArray();
+
                 var store = new DocumentStore
                 {
                     Database = _config.Databases?[0],
-                    Urls = clusterInfo.Urls.Select(PrepareUrlForDocumentStore).ToArray(),
+                    Urls = clusterInfo.Urls,
                     //Certificate =  TODO: finish this
                 };
                 store.Initialize();
