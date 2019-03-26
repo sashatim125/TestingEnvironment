@@ -146,37 +146,36 @@ namespace TestingEnvironment.Orchestrator
                 FileName = Path.Combine(server.Path, "Raven.Server.exe"),
                 WorkingDirectory = server.Path,
                 Arguments = args.ToString(),
-                // CreateNoWindow = true,
-                // RedirectStandardOutput = true,
-                // RedirectStandardError = true,
+                 CreateNoWindow = true,
+                 RedirectStandardOutput = true,
+                 RedirectStandardError = true,
                 RedirectStandardInput = true,
                 UseShellExecute = false,                
             };
             
             var process = Process.Start(processStartInfo);
-            //process.WaitForInputIdle(3000);
 
-            //string url = null;
-            //var outputString = ReadOutput(process.StandardOutput, async (line, builder) =>
-            //{
-            //    if (line == null)
-            //    {
-            //        var errorString = ReadOutput(process.StandardError, null);
+            string url = null;
+            var outputString = ReadOutput(process.StandardOutput, async (line, builder) =>
+            {
+                if (line == null)
+                {
+                    var errorString = ReadOutput(process.StandardError, null);
 
-            //        ShutdownServerProcess(process);
+                    ShutdownServerProcess(process);
 
-            //        throw new InvalidOperationException($"Failed to RaiseServer {server.Url}");
-            //    }
+                    throw new InvalidOperationException($"Failed to RaiseServer {server.Url}");
+                }
 
-            //    const string prefix = "Server available on: ";
-            //    if (line.StartsWith(prefix))
-            //    {
-            //        url = line.Substring(prefix.Length);
-            //        return true;
-            //    }
+                const string prefix = "Server available on: ";
+                if (line.StartsWith(prefix))
+                {
+                    url = line.Substring(prefix.Length);
+                    return true;
+                }
 
-            //    return false;
-            //});
+                return false;
+            });
         }
 
         private static string ReadOutput(StreamReader output, Func<string, StringBuilder, Task<bool>> onLine)
