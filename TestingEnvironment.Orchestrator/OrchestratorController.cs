@@ -1,9 +1,6 @@
-﻿using System;
-using Nancy;
+﻿using Nancy;
 using Nancy.ModelBinding;
-using Nancy.Routing;
 using TestingEnvironment.Common;
-using TestingEnvironment.Common.Orchestrator;
 
 // ReSharper disable VirtualMemberCallInConstructor
 

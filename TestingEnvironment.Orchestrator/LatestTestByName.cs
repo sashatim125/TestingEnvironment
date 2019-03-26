@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using Raven.Client.Documents.Indexes;
-using TestingEnvironment.Common.Orchestrator;
+using TestingEnvironment.Common.OrchestratorReporting;
 
 namespace TestingEnvironment.Orchestrator
 {

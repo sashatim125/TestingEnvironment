@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TestingEnvironment.Common.Orchestrator
+namespace TestingEnvironment.Common.OrchestratorReporting
 {
     public class TestInfo
     {

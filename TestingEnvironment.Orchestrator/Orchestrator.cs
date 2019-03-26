@@ -7,17 +7,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Raven.Client.Documents;
-using Raven.Client.Documents.Conventions;
 using Raven.Client.Extensions;
-using Raven.Client.Http;
 using Raven.Client.ServerWide;
 using Raven.Client.ServerWide.Commands;
 using Raven.Client.ServerWide.Operations;
 using Raven.Embedded;
 using Sparrow.Json;
-using Sparrow.Platform.Posix.macOS;
 using TestingEnvironment.Common;
-using TestingEnvironment.Common.Orchestrator;
+using TestingEnvironment.Common.OrchestratorReporting;
 
 namespace TestingEnvironment.Orchestrator
 {
