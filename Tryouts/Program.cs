@@ -2,13 +2,23 @@
 using System.Linq;
 using TestingEnvironment.Client;
 
-namespace Tryouts
+namespace BlogComment
 {
     class Program
     {
+        static void Main(string[] args)
+        {
+            using (var client = new PutCommentsTest(args[0], "PutCommentsTest"))
+            {
+                client.Initialize();
+                client.RunTest();
+            }
+        }
+
         public class PutCommentsTest : BaseTest
         {
             #region DTOs
+
             public class BlogComment
             {
                 public string Id { get; set; }
@@ -33,6 +43,7 @@ namespace Tryouts
                 Tech = 8,
                 Other = 9
             }
+
             #endregion
 
             public PutCommentsTest(string orchestratorUrl, string testName) : base(orchestratorUrl, testName, "Aviv")
@@ -110,14 +121,6 @@ namespace Tryouts
                         bulk.Store(comment);
                     }
                 }
-}
-        }
-        static void Main(string[] args)
-        {
-            using (var client = new PutCommentsTest("http://localhost:5000", "PutCommentsTest"))
-            {
-                client.Initialize();
-                client.RunTest();
             }
         }
     }
