@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Threading;
 
 namespace Counters
 {
@@ -13,50 +11,52 @@ namespace Counters
 
         static void RunCountersScenarios(string orchestratorUrl)
         {
-            var halfHour = TimeSpan.FromMinutes(30);
-            var sw = Stopwatch.StartNew();
-
-            while (sw.Elapsed < halfHour)
+            using (var client = new PutCommentsTest(orchestratorUrl, "PutCommentsTest"))
             {
-                using (var client = new PutCommentsTest(orchestratorUrl, "PutCommentsTest"))
-                {
-                    client.Initialize();
-                    client.RunTest();
-                }
+                client.Initialize();
+                client.RunTest();
+            }
 
-                using (var client = new PutCountersOnCommentsBasedOnTopic(orchestratorUrl, "PutCountersOnCommentsBasedOnTopic"))
-                {
-                    client.Initialize();
-                    client.RunTest();
-                }
+            using (var client =
+                new PutCountersOnCommentsBasedOnTopic(orchestratorUrl, "PutCountersOnCommentsBasedOnTopic"))
+            {
+                client.Initialize();
+                client.RunTest();
+            }
 
-                Thread.Sleep(10000);
+            Thread.Sleep(10000);
 
-                using (var client = new PutCountersOnCommentsRandomly(orchestratorUrl, "PutCountersOnCommentsRandomly"))
-                {
-                    client.Initialize();
-                    client.RunTest();
-                }
+            using (var client = new PutCountersOnCommentsRandomly(orchestratorUrl, "PutCountersOnCommentsRandomly"))
+            {
+                client.Initialize();
+                client.RunTest();
+            }
 
-                Thread.Sleep(10000);
+            Thread.Sleep(10000);
 
-                using (var client = new QueryBlogCommentsByTag(orchestratorUrl, "QueryBlogCommentsByTag"))
-                {
-                    client.Initialize();
-                    client.RunTest();
-                }
+            using (var client = new QueryBlogCommentsByTag(orchestratorUrl, "QueryBlogCommentsByTag"))
+            {
+                client.Initialize();
+                client.RunTest();
+            }
 
-                Thread.Sleep(10000);
+            Thread.Sleep(10000);
 
-                using (var client = new PatchCommentRatingsBasedOnCounters(orchestratorUrl, "PatchCommentRatingsBasedOnCounters"))
-                {
-                    client.Initialize();
-                    client.RunTest();
-                }
+            using (var client =
+                new PatchCommentRatingsBasedOnCounters(orchestratorUrl, "PatchCommentRatingsBasedOnCounters"))
+            {
+                client.Initialize();
+                client.RunTest();
+            }
 
-                Thread.Sleep(10000);
+            Thread.Sleep(10000);
+
+            using (var client =
+                new QueryBlogCommentsAndIncludeCounters(orchestratorUrl, "QueryBlogCommentsAndIncludeCounters"))
+            {
+                client.Initialize();
+                client.RunTest();
             }
         }
     }
-
 }
