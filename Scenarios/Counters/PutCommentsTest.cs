@@ -57,13 +57,11 @@ namespace Counters
 
                 for (int i = 0; i < 1024; i++)
                 {
-                    var rnd = new Random();
+                    var randTag = ((CommentTag)Random.Next(0, 9)).ToString();
 
-                    var randTag = ((CommentTag)rnd.Next(0, 9)).ToString();
-
-                    var randYearOffset = rnd.Next(0, 4);
-                    var randMonthOffset = rnd.Next(0, 11);
-                    var randDayOffset = rnd.Next(0, 30);
+                    var randYearOffset = Random.Next(0, 4);
+                    var randMonthOffset = Random.Next(0, 11);
+                    var randDayOffset = Random.Next(0, 30);
                     var randDate = DateTime.Today.ToUniversalTime()
                         .AddYears(-randYearOffset)
                         .AddMonths(-randMonthOffset)

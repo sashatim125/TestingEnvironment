@@ -24,15 +24,13 @@ namespace Counters
                 {
                     // query random 128 BlogComment docs
 
-                    var rand = new Random();
-
                     var query = session.Query<BlogComment>();
                     var count = query.Count();
                     var take = 128;
 
                     var skip = count - take < 0
                         ? 0
-                        : rand.Next(0, count - take);
+                        : Random.Next(0, count - take);
 
                     ReportInfo("Started querying random 128 docs");
 
@@ -44,7 +42,7 @@ namespace Counters
 
                         viewed.Add(comment.Id);
 
-                        var coinFlip = rand.Next(0, 9) % 2;
+                        var coinFlip = Random.Next(0, 9) % 2;
                         if (coinFlip == 0)
                         {
                             liked.Add(comment.Id);
