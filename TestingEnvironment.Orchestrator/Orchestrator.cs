@@ -67,9 +67,9 @@ namespace TestingEnvironment.Orchestrator
             }
             
             EmbeddedServer.Instance.StartServer(new ServerOptions
-{  
-    ServerUrl = "http://127.0.0.1:8090"
-});
+            {  
+                ServerUrl = "http://127.0.0.1:8090"
+            });
             _reportingDocumentStore = EmbeddedServer.Instance.GetDocumentStore(new DatabaseOptions(OrchestratorDatabaseName));
             _reportingDocumentStore.Initialize();
             new LatestTestByName().Execute(_reportingDocumentStore);
