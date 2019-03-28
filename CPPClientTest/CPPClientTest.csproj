@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <StartupObject>CPPClientTest.Program</StartupObject>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestingEnvironment.Client\TestingEnvironment.Client.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="libs\libcurl-d.dll" Link="libcurl-d.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+	
+    <None Include="libs\LIBEAY32.dll" Link="LIBEAY32.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	
+	<None Include="libs\SSLEAY32.dll" Link="SSLEAY32.dll">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	
+	<None Include="libs\test4.2.dll" Link="test4.2.dll">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	
+	<None Include="libs\zlibd1.dll" Link="zlibd1.dll">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	</None>
+	
+   </ItemGroup>
+  
+</Project>
